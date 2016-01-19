@@ -132,12 +132,28 @@ class Canvas(object):
         if folder.folders_count < 1: return []
         return map(CanvasFolder, flatten(self._fetch_all(folder.folders_url)))
 
-    def list_dir(self, folder):
+    def folder_list(self, folder):
         return self._folder_folders(folder) + self._folder_files(folder)
 
-    def folder(self, id):
+    def folder_from_id(self, id):
         return CanvasFolder(self.api.get("/folders/{0}".format(id)))
 
     def root_folder(self, type, id):
         return CanvasFolder(self.api.get("/{0}/{1}/folders/{2}"\
                                          .format(type, id, Canvas._ROOT_FOLDER_ID)))
+
+    def file_del(self, file):
+        self.api.delete("/files/{0}".format(file.id))
+
+    def folder_del(self, folder, recurse=False):
+        args = {}
+        if recurse:
+            args["force"] = 'true'
+        self.api.delete("/folders/{0}".format(folder.id), params=args)
+
+    def folder_create(self, parent, name, hidden=False):
+        args = {"name": name}
+        if hidden: args["hidden"] = 'true'
+        return CanvasFolder(self.api.post("/folders/{0}/folders".format(parent.id),
+                                          params = args))
+
